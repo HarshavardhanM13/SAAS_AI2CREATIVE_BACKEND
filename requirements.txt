@@ -12,3 +12,4 @@ requests
 google-genai
 openai
 groq
+fal-client
