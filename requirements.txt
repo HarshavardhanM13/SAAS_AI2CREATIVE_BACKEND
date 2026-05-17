@@ -14,3 +14,4 @@ openai
 groq
 fal-client
 Pillow
+stability_sdk
