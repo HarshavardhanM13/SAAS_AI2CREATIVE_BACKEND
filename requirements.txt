@@ -13,3 +13,4 @@ google-genai
 openai
 groq
 fal-client
+Pillow
