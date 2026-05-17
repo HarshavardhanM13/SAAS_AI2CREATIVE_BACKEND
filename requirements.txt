@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+httpx
+pydantic
+python-multipart
+psycopg2-binary
+sqlalchemy
+slowapi
+python-dotenv
+loguru
+requests
+google-genai
+openai
+groq
