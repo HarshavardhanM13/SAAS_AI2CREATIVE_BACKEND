@@ -13,9 +13,6 @@ from fastapi import HTTPException
 from services import Image_Prompt_service
 from schemas.Prompt_Schema import PromptRequest
 
-from stability_sdk import client
-import stability_sdk.interfaces.gooseai.generation.generation_pb2 as generation
-
 
 load_dotenv()
 
@@ -31,15 +28,6 @@ HEADERS = {
     "Authorization": f"Bearer {API_TOKEN}",
     "Content-Type": "application/json"
 }
-
-os.environ["STABILITY_HOST"] = "grpc.stability.ai:443"
-os.environ["STABILITY_KEY"] = os.getenv("STABILITY_API_KEY")
-
-stability_api = client.StabilityInference(
-    key=os.environ["STABILITY_KEY"],
-    verbose=True,
-    engine="stable-diffusion-xl-1024-v1-0",
-)
 
 
 # Generate image using Cloudflare
@@ -189,90 +177,3 @@ def smart_logo_placement(base_img: Image.Image, logo_img: Image.Image):
     resized_logo = resize_logo(logo_img, base_img)
 
     return blend_logo(base_img, resized_logo, position)
-
-
-# Generate image with logo using Stability AI
-def generate_image_with_logo(
-    user_prompt,
-    user_style,
-    file=None,
-    image_url=None
-):
-    try:
-        prompt = f"{user_prompt}, style: {user_style}"
-
-        logo_img = None
-
-        if file:
-            logo_img = Image.open(file.file).convert("RGBA")
-
-        elif image_url:
-            response = requests.get(
-                image_url,
-                headers={"User-Agent": "Mozilla/5.0"}
-            )
-
-            if response.status_code != 200:
-                return {
-                    "status": "error",
-                    "message": "Failed to fetch image"
-                }
-
-            if "image" not in response.headers.get("Content-Type", ""):
-                return {
-                    "status": "error",
-                    "message": "Invalid image URL"
-                }
-
-            logo_img = Image.open(
-                io.BytesIO(response.content)
-            ).convert("RGBA")
-
-        else:
-            return {
-                "status": "error",
-                "message": "No logo provided"
-            }
-
-        answers = stability_api.generate(
-            prompt=prompt,
-            steps=30,
-            cfg_scale=8.5,
-            width=1024,
-            height=1024,
-            sampler=generation.SAMPLER_K_DPMPP_2M,
-        )
-
-        for resp in answers:
-            for artifact in resp.artifacts:
-                if artifact.type == generation.ARTIFACT_IMAGE:
-
-                    base_img = Image.open(
-                        io.BytesIO(artifact.binary)
-                    ).convert("RGB")
-
-                    final_img = smart_logo_placement(
-                        base_img,
-                        logo_img
-                    )
-
-                    buffer = io.BytesIO()
-                    final_img.save(buffer, format="PNG")
-
-                    return {
-                        "status": "success",
-                        "image": base64.b64encode(
-                            buffer.getvalue()
-                        ).decode()
-                    }
-
-        return {
-            "status": "error",
-            "message": "No image generated"
-        }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
