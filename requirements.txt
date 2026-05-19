@@ -12,6 +12,12 @@ requests
 google-genai
 openai
 groq
-fal-client
-Pillow
-stability_sdk
+fal_client
+aiofiles
+pillow
+opencv-python-headless
+numpy
+
+stability-sdk
+grpcio==1.62.2
+grpcio-tools==1.62.2
